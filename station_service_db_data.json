@@ -1,0 +1,267 @@
+[
+  {
+    "model": "station.traintype",
+    "pk": 1,
+    "fields": {
+      "name": "High speed"
+    }
+  },
+  {
+    "model": "station.traintype",
+    "pk": 2,
+    "fields": {
+      "name": "Inter-city"
+    }
+  },
+  {
+    "model": "station.traintype",
+    "pk": 3,
+    "fields": {
+      "name": "Regional"
+    }
+  },
+  {
+    "model": "station.traintype",
+    "pk": 4,
+    "fields": {
+      "name": "Subway"
+    }
+  },
+  {
+    "model": "station.traintype",
+    "pk": 5,
+    "fields": {
+      "name": "Express"
+    }
+  },
+  {
+    "model": "station.train",
+    "pk": 1,
+    "fields": {
+      "name": "Express-101",
+      "cargo_num": 1,
+      "places_in_cargo": 150,
+      "train_type": 1
+    }
+  },
+  {
+    "model": "station.train",
+    "pk": 2,
+    "fields": {
+      "name": "InterCity-200",
+      "cargo_num": 2,
+      "places_in_cargo": 120,
+      "train_type": 2
+    }
+  },
+  {
+    "model": "station.train",
+    "pk": 3,
+    "fields": {
+      "name": "HighSpeed-300",
+      "cargo_num": 3,
+      "places_in_cargo": 200,
+      "train_type": 1
+    }
+  },
+  {
+    "model": "station.train",
+    "pk": 4,
+    "fields": {
+      "name": "Regional-400",
+      "cargo_num": 4,
+      "places_in_cargo": 100,
+      "train_type": 3
+    }
+  },
+  {
+    "model": "station.train",
+    "pk": 5,
+    "fields": {
+      "name": "Subway-500",
+      "cargo_num": 5,
+      "places_in_cargo": 80,
+      "train_type": 4
+    }
+  },
+  {
+    "model": "station.station",
+    "pk": 1,
+    "fields": {
+      "name": "Station A",
+      "latitude": 40.7128,
+      "longitude": -74.0060
+    }
+  },
+  {
+    "model": "station.station",
+    "pk": 2,
+    "fields": {
+      "name": "Station B",
+      "latitude": 34.0522,
+      "longitude": -118.2437
+    }
+  },
+  {
+    "model": "station.station",
+    "pk": 3,
+    "fields": {
+      "name": "Station C",
+      "latitude": 51.5074,
+      "longitude": -0.1278
+    }
+  },
+  {
+    "model": "station.station",
+    "pk": 4,
+    "fields": {
+      "name": "Station D",
+      "latitude": -33.8688,
+      "longitude": 151.2093
+    }
+  },
+  {
+    "model": "station.station",
+    "pk": 5,
+    "fields": {
+      "name": "Station E",
+      "latitude": 55.7558,
+      "longitude": 37.6176
+    }
+  },
+  {
+    "model": "station.route",
+    "pk": 1,
+    "fields": {
+      "source": 1,
+      "destination": 2
+    }
+  },
+  {
+    "model": "station.route",
+    "pk": 2,
+    "fields": {
+      "source": 2,
+      "destination": 3
+    }
+  },
+  {
+    "model": "station.route",
+    "pk": 3,
+    "fields": {
+      "source": 3,
+      "destination": 4
+    }
+  },
+  {
+    "model": "station.route",
+    "pk": 4,
+    "fields": {
+      "source": 4,
+      "destination": 5
+    }
+  },
+  {
+    "model": "station.route",
+    "pk": 5,
+    "fields": {
+      "source": 5,
+      "destination": 1
+    }
+  },
+  {
+    "model": "station.crew",
+    "pk": 1,
+    "fields": {
+      "first_name": "John",
+      "last_name": "Doe"
+    }
+  },
+  {
+    "model": "station.crew",
+    "pk": 2,
+    "fields": {
+      "first_name": "Jane",
+      "last_name": "Smith"
+    }
+  },
+  {
+    "model": "station.crew",
+    "pk": 3,
+    "fields": {
+      "first_name": "Michael",
+      "last_name": "Johnson"
+    }
+  },
+  {
+    "model": "station.crew",
+    "pk": 4,
+    "fields": {
+      "first_name": "Emily",
+      "last_name": "Brown"
+    }
+  },
+  {
+    "model": "station.crew",
+    "pk": 5,
+    "fields": {
+      "first_name": "Daniel",
+      "last_name": "Davis"
+    }
+  },
+  {
+    "model": "station.journey",
+    "pk": 1,
+    "fields": {
+      "route": 1,
+      "train": 1,
+      "crew": [1, 2],
+      "departure_time": "2022-01-09T12:00:00Z",
+      "arrival_time": "2022-01-09T14:00:00Z"
+    }
+  },
+  {
+    "model": "station.journey",
+    "pk": 2,
+    "fields": {
+      "route": 2,
+      "train": 2,
+      "crew": [3, 4],
+      "departure_time": "2022-01-10T10:30:00Z",
+      "arrival_time": "2022-01-10T12:30:00Z"
+    }
+  },
+  {
+    "model": "station.journey",
+    "pk": 3,
+    "fields": {
+      "route": 3,
+      "train": 3,
+      "crew": [1, 5],
+      "departure_time": "2022-01-11T15:45:00Z",
+      "arrival_time": "2022-01-11T17:45:00Z"
+    }
+  },
+  {
+    "model": "station.journey",
+    "pk": 4,
+    "fields": {
+      "route": 4,
+      "train": 4,
+      "crew": [3, 5],
+      "departure_time": "2022-01-12T08:00:00Z",
+      "arrival_time": "2022-01-12T10:00:00Z"
+    }
+  },
+  {
+    "model": "station.journey",
+    "pk": 5,
+    "fields": {
+      "route": 5,
+      "train": 5,
+      "crew": [2, 4, 5],
+      "departure_time": "2022-01-13T14:15:00Z",
+      "arrival_time": "2022-01-13T16:15:00Z"
+    }
+  }
+]
