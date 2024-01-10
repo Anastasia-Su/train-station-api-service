@@ -26,17 +26,31 @@ class RouteSerializer(serializers.ModelSerializer):
         fields = ("id", "source", "destination", "distance")
 
 
-class RouteListSerializer(serializers.ModelSerializer):
+class RouteListSerializer(RouteSerializer):
     source = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="route._from"
+        read_only=True, slug_field="name"
     )
     destination = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="route._to"
+        read_only=True, slug_field="name"
     )
 
     class Meta:
         model = Route
         fields = ("id", "source", "destination")
+
+
+class RouteDetailSerializer(RouteSerializer):
+    source = serializers.SlugRelatedField(
+        read_only=True, slug_field="name"
+    )
+    destination = serializers.SlugRelatedField(
+        read_only=True, slug_field="name"
+    )
+    distance_km = serializers.FloatField(source="distance", read_only=True)
+
+    class Meta:
+        model = Route
+        fields = ("id", "source", "destination", "distance_km")
 
 
 class TrainTypeSerializer(serializers.ModelSerializer):
@@ -83,7 +97,15 @@ class CrewSerializer(serializers.ModelSerializer):
         fields = ("id", "first_name", "last_name", "full_name")
 
 
+class CrewListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Crew
+        fields = ("id", "full_name")
+
+
 class JourneySerializer(serializers.ModelSerializer):
+    departure_time = serializers.CharField(source="format_departure_time", read_only=True)
+    arrival_time = serializers.CharField(source="format_arrival_time", read_only=True)
     class Meta:
         model = Journey
         fields = (
@@ -99,7 +121,7 @@ class JourneySerializer(serializers.ModelSerializer):
 class JourneyListSerializer(JourneySerializer):
     train_name = serializers.CharField(source="train.name", read_only=True)
     train_image = serializers.ImageField(source="train.image", read_only=True)
-    route = RouteSerializer(read_only=True)
+    route = serializers.CharField(source="route.get_route_display", read_only=True)
     tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -109,11 +131,24 @@ class JourneyListSerializer(JourneySerializer):
             "train_name",
             "train_image",
             "route",
+            "departure_time",
+            "arrival_time",
             "tickets_available"
         )
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        user = validated_data.pop('user', None)
+
+        order, created = Order.objects.get_or_create(user=user)
+
+        validated_data['order'] = order
+
+        ticket = Ticket.objects.create(**validated_data)
+
+        return ticket
+
     class Meta:
         model = Ticket
         fields = ("id", "cargo", "seat", "journey")
@@ -121,6 +156,10 @@ class TicketSerializer(serializers.ModelSerializer):
 
 class TicketListSerializer(TicketSerializer):
     journey = JourneyListSerializer(read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "cargo", "seat", "journey")
 
 
 class TicketSeatsSerializer(TicketSerializer):
@@ -135,6 +174,11 @@ class JourneyDetailSerializer(JourneySerializer):
     taken_places = TicketSeatsSerializer(
         source="tickets", many=True, read_only=True
     )
+    crew = serializers.SerializerMethodField(read_only=True)
+    route = serializers.CharField(source="route.get_route_display", read_only=True)
+
+    def get_crew(self, obj):
+        return [member.full_name for member in obj.crew.all()]
 
     class Meta:
         model = Journey
@@ -169,3 +213,15 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class OrderListSerializer(OrderSerializer):
     tickets = TicketListSerializer(many=True, read_only=True)
+
+
+    # tickets = TicketForm(many=True)
+    # cargo = serializers.SlugRelatedField(
+    #     read_only=True, slug_field="ticket.cargo"
+    # )
+    # seat = serializers.SlugRelatedField(
+    #     read_only=True, slug_field="ticket.seat"
+    # )
+    # journey = JourneySerializer(
+    #     read_only=True
+    # )

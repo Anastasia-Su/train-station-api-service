@@ -1,11 +1,13 @@
 import os
 import uuid
 from geopy.distance import geodesic
+from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
+from django.contrib.auth import get_user_model
 
 
 class Station(models.Model):
@@ -35,12 +37,8 @@ class Route(models.Model):
         return round(distance, 2)
 
     @property
-    def _from(self):
-        return f"({self.source.latitude}, {self.source.longitude})"
-
-    @property
-    def _to(self):
-        return f"({self.destination.latitude}, {self.destination.longitude})"
+    def get_route_display(self):
+        return f"From {self.source.name} to {self.destination.name}"
 
 
 class TrainType(models.Model):
@@ -51,7 +49,7 @@ class TrainType(models.Model):
 
 def movie_image_file_path(instance, filename):
     _, extension = os.path.splitext(filename)
-    filename = f"{slugify(instance.title)}-{uuid.uuid4()}{extension}"
+    filename = f"{slugify(instance.name)}-{uuid.uuid4()}{extension}"
 
     return os.path.join("uploads/movies/", filename)
 
@@ -94,6 +92,14 @@ class Journey(models.Model):
     arrival_time = models.DateTimeField()
     crew = models.ManyToManyField(Crew, blank=True)
 
+    @property
+    def format_departure_time(self):
+        return self.departure_time.strftime("%m.%d.%Y, %H:%M")
+
+    @property
+    def format_arrival_time(self):
+        return self.arrival_time.strftime("%m.%d.%Y, %H:%M")
+
     def __str__(self):
         return f"{self.train.name} ({self.departure_time})"
 
@@ -115,6 +121,18 @@ class Ticket(models.Model):
         Order, on_delete=models.CASCADE, related_name="tickets"
     )
 
+    # def save(
+    #     self,
+    #     force_insert=False,
+    #     force_update=False,
+    #     using=None,
+    #     update_fields=None,
+    # ):
+    #     self.full_clean()
+    #     return super(Ticket, self).save(
+    #         force_insert, force_update, using, update_fields
+    #     )
+
     def __str__(self):
         return (
             f"{str(self.journey)} (cargo: {self.cargo}, seat: {self.seat})"
@@ -122,4 +140,4 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("journey", "cargo", "seat")
-        ordering = ["cargo", "seat"]
+        ordering = ["journey", "cargo", "seat"]
