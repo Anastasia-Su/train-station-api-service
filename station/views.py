@@ -47,7 +47,7 @@ class StationViewSet(viewsets.ModelViewSet):
 
 
 class RouteViewSet(viewsets.ModelViewSet):
-    queryset = Route.objects.all()
+    queryset = Route.objects.all().select_related("source", "destination")
     serializer_class = RouteSerializer
     permission_classes = (
         IsAdminOrIfAuthenticatedReadOnly,
@@ -72,7 +72,7 @@ class TrainTypeViewSet(viewsets.ModelViewSet):
 
 
 class TrainViewSet(viewsets.ModelViewSet):
-    queryset = Train.objects.all()
+    queryset = Train.objects.all().select_related("train_type")
     serializer_class = TrainSerializer
     permission_classes = (
         IsAdminOrIfAuthenticatedReadOnly,
@@ -124,7 +124,9 @@ class CrewViewSet(viewsets.ModelViewSet):
 
 class JourneyViewSet(viewsets.ModelViewSet):
     queryset = (
-        Journey.objects.all()
+        Journey.objects
+        .select_related("route__source", "route__destination", "train")
+        .prefetch_related("crew")
         .annotate(
             tickets_available=(
                     F("train__cargo_num") * F("train__places_in_cargo")
@@ -145,7 +147,8 @@ class JourneyViewSet(viewsets.ModelViewSet):
 
 
 class TicketViewSet(viewsets.ModelViewSet):
-    queryset = Ticket.objects.all()
+    queryset = Ticket.objects.select_related("journey__train")
+
     serializer_class = TicketSerializer
     permission_classes = (
         IsAdminOrIfAuthenticatedReadOnly,
@@ -185,7 +188,10 @@ class TicketViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
+    queryset = (
+        Order.objects.all()
+        .select_related("tickets__journey")
+    )
     serializer_class = OrderSerializer
     permission_classes = (
         IsAdminOrIfAuthenticatedReadOnly,

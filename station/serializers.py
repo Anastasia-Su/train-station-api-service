@@ -149,6 +149,13 @@ class TicketSerializer(serializers.ModelSerializer):
 
         return ticket
 
+    def validate(self, attrs):
+        data = super(TicketSerializer, self).validate(attrs)
+        ticket_instance = Ticket(**data)
+        ticket_instance.clean()
+
+        return data
+
     class Meta:
         model = Ticket
         fields = ("id", "cargo", "seat", "journey")

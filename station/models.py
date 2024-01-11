@@ -121,17 +121,35 @@ class Ticket(models.Model):
         Order, on_delete=models.CASCADE, related_name="tickets"
     )
 
-    # def save(
-    #     self,
-    #     force_insert=False,
-    #     force_update=False,
-    #     using=None,
-    #     update_fields=None,
-    # ):
-    #     self.full_clean()
-    #     return super(Ticket, self).save(
-    #         force_insert, force_update, using, update_fields
-    #     )
+    def clean(self):
+        for ticket_attr_value, ticket_attr_name, train_attr_name in [
+            (self.cargo, "cargo", "cargo_num"),
+            (self.seat, "seat", "places_in_cargo"),
+        ]:
+            count_attrs = getattr(
+                self.journey.train, train_attr_name
+            )
+            if not (1 <= ticket_attr_value <= count_attrs):
+                raise ValidationError(
+                    {
+                        ticket_attr_name: f"{ticket_attr_name} "
+                        f"number must be in available range: "
+                        f"(1, {train_attr_name}): "
+                        f"(1, {count_attrs})"
+                    }
+                )
+
+    def save(
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
+        self.full_clean()
+        super(Ticket, self).save(
+            force_insert, force_update, using, update_fields
+        )
 
     def __str__(self):
         return (
