@@ -83,10 +83,10 @@ class Crew(models.Model):
 
 class Journey(models.Model):
     route = models.ForeignKey(
-        Route, on_delete=models.CASCADE, related_name="journeys"
+        Route, on_delete=models.CASCADE, related_name="journey_routes"
     )
     train = models.ForeignKey(
-        Train, on_delete=models.CASCADE, related_name="journeys"
+        Train, on_delete=models.CASCADE, related_name="journey_trains"
     )
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
