@@ -10,7 +10,16 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
-from .models import Train, TrainType, Journey, Crew, Ticket, Order, Route, Station
+from .models import (
+    Train,
+    TrainType,
+    Journey,
+    Crew,
+    Ticket,
+    Order,
+    Route,
+    Station
+)
 from .serializers import (
     TrainSerializer,
     TrainListSerializer,
@@ -79,11 +88,11 @@ class TrainViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrieve the movies with filters"""
-        type = self.request.query_params.get("train_type")
+        train_type = self.request.query_params.get("type")
         queryset = self.queryset
 
-        if type:
-            queryset = queryset.filter(train_type__name__icontains=type)
+        if train_type:
+            queryset = queryset.filter(train_type__name__icontains=train_type)
 
         return queryset.distinct()
 
@@ -98,18 +107,16 @@ class TrainViewSet(viewsets.ModelViewSet):
         train = self.get_object()
         serializer = self.get_serializer(train, data=request.data)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         parameters=[
             OpenApiParameter(
-                "train_type",
+                "type",
                 type=OpenApiTypes.STR,
-                description="Filter by train type (ex. ?train_type=pattern)",
+                description="Filter by train type (ex. ?type=pattern)",
             ),
         ]
     )
@@ -131,11 +138,15 @@ class CrewViewSet(viewsets.ModelViewSet):
 
 class JourneyViewSet(viewsets.ModelViewSet):
     queryset = (
-        Journey.objects.select_related("route__source", "route__destination", "train")
+        Journey.objects.select_related(
+            "route__source", "route__destination", "train"
+        )
         .prefetch_related("crew")
         .annotate(
             tickets_available=(
-                F("train__cargo_num") * F("train__places_in_cargo") - Count("tickets")
+                F("train__cargo_num")
+                * F("train__places_in_cargo")
+                - Count("tickets")
             )
         )
     )
@@ -176,7 +187,10 @@ class JourneyViewSet(viewsets.ModelViewSet):
             OpenApiParameter(
                 "date",
                 type=OpenApiTypes.DATE,
-                description=("Filter by date of departure " "(ex. ?date=2022-10-23)"),
+                description=(
+                    "Filter by date of departure "
+                    "(ex. ?date=2022-10-23)"
+                ),
             ),
         ]
     )

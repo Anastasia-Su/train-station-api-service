@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             model_name="train",
             name="image",
             field=models.ImageField(
-                null=True, upload_to=station.models.movie_image_file_path
+                null=True, upload_to=station.models.train_image_file_path
             ),
         ),
     ]

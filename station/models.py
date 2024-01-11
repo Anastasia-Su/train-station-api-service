@@ -30,9 +30,14 @@ class Route(models.Model):
     @property
     def distance(self) -> float:
         source_coordinates = (self.source.latitude, self.source.longitude)
-        destination_coordinates = (self.destination.latitude, self.destination.longitude)
+        destination_coordinates = (
+            self.destination.latitude,
+            self.destination.longitude,
+        )
 
-        distance = geodesic(source_coordinates, destination_coordinates).kilometers
+        distance = geodesic(
+            source_coordinates, destination_coordinates
+        ).kilometers
 
         return round(distance, 2)
 
@@ -47,20 +52,25 @@ class TrainType(models.Model):
     def __str__(self):
         return self.name
 
-def movie_image_file_path(instance, filename):
+
+def train_image_file_path(instance, filename):
     _, extension = os.path.splitext(filename)
     filename = f"{slugify(instance.name)}-{uuid.uuid4()}{extension}"
 
-    return os.path.join("uploads/movies/", filename)
+    return os.path.join("uploads/trains/", filename)
+
 
 class Train(models.Model):
     name = models.CharField(max_length=255)
     cargo_num = models.IntegerField()
     places_in_cargo = models.IntegerField()
     train_type = models.ForeignKey(
-        TrainType, on_delete=models.PROTECT, related_name="trains"
+        TrainType,
+        on_delete=models.PROTECT,
+        related_name="trains",
+        null=True
     )
-    image = models.ImageField(null=True, upload_to=movie_image_file_path)
+    image = models.ImageField(null=True, upload_to=train_image_file_path)
 
     def __str__(self):
         return self.name
@@ -126,9 +136,7 @@ class Ticket(models.Model):
             (self.cargo, "cargo", "cargo_num"),
             (self.seat, "seat", "places_in_cargo"),
         ]:
-            count_attrs = getattr(
-                self.journey.train, train_attr_name
-            )
+            count_attrs = getattr(self.journey.train, train_attr_name)
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise ValidationError(
                     {
@@ -152,9 +160,7 @@ class Ticket(models.Model):
         )
 
     def __str__(self):
-        return (
-            f"{str(self.journey)} (cargo: {self.cargo}, seat: {self.seat})"
-        )
+        return f"{str(self.journey)} (cargo: {self.cargo}, seat: {self.seat})"
 
     class Meta:
         unique_together = ("journey", "cargo", "seat")
