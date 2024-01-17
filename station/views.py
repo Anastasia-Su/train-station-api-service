@@ -1,11 +1,9 @@
 from datetime import datetime
 
 from django.db.models import Count, F
-from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -198,7 +196,9 @@ class JourneyViewSet(viewsets.ModelViewSet):
 
 
 class TicketViewSet(viewsets.ModelViewSet):
-    queryset = Ticket.objects.select_related("journey__train")
+    queryset = Ticket.objects.select_related(
+        "journey__train"
+    )
 
     serializer_class = TicketSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
@@ -233,7 +233,9 @@ class TicketViewSet(viewsets.ModelViewSet):
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.prefetch_related(
-        "tickets__journey__train", "tickets__journey__route"
+        "tickets__journey__train",
+        "tickets__journey__route",
+        "tickets__journey__route__source",
     )
     serializer_class = OrderSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)

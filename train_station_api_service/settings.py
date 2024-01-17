@@ -30,10 +30,14 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "172.17.0.1",
+]
 
 INTERNAL_IPS = [
     "127.0.0.1",
+    "172.17.0.1",
 ]
 
 
@@ -170,13 +174,6 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-    ],
-    # "DEFAULT_PAGINATION_CLASS":
-    #     "rest_framework.pagination.LimitOffsetPagination",
-    # "PAGE_SIZE": 10,
 }
 
 SPECTACULAR_SETTINGS = {
