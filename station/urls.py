@@ -23,7 +23,6 @@ router.register("orders", OrderViewSet)
 router.register("routes", RouteViewSet)
 router.register("stations", StationViewSet)
 
-
 urlpatterns = [path("", include(router.urls))]
 
 app_name = "station"

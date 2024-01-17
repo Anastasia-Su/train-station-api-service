@@ -70,10 +70,15 @@ class Train(models.Model):
         related_name="trains",
         null=True
     )
-    image = models.ImageField(null=True, upload_to=train_image_file_path)
+    image = models.ImageField(
+        null=True, upload_to=train_image_file_path
+    )
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ["name"]
 
 
 class Crew(models.Model):
@@ -104,14 +109,17 @@ class Journey(models.Model):
 
     @property
     def format_departure_time(self):
-        return self.departure_time.strftime("%m.%d.%Y, %H:%M")
+        return self.departure_time.strftime("%Y-%m-%d %H:%M")
 
     @property
     def format_arrival_time(self):
-        return self.arrival_time.strftime("%m.%d.%Y, %H:%M")
+        return self.arrival_time.strftime("%Y-%m-%d %H:%M")
 
     def __str__(self):
         return f"{self.train.name} ({self.departure_time})"
+
+    class Meta:
+        ordering = ["-departure_time", "train__name"]
 
 
 class Order(models.Model):

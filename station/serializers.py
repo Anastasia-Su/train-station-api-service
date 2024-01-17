@@ -81,6 +81,12 @@ class TrainListSerializer(TrainSerializer):
         fields = ("id", "name", "train_type", "image")
 
 
+class TrainImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Train
+        fields = ("id", "image")
+
+
 class TrainDetailSerializer(TrainSerializer):
     train_type = serializers.CharField(
         source="train_type.name", read_only=True
@@ -96,12 +102,6 @@ class TrainDetailSerializer(TrainSerializer):
             "places_in_cargo",
             "image"
         )
-
-
-class TrainImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Train
-        fields = ("id", "image")
 
 
 class CrewSerializer(serializers.ModelSerializer):
@@ -147,6 +147,7 @@ class JourneyListSerializer(JourneySerializer):
         source="route.get_route_display", read_only=True
     )
     tickets_available = serializers.IntegerField(read_only=True)
+    departure_time = serializers.CharField()
 
     class Meta:
         model = Journey

@@ -164,7 +164,6 @@ class JourneyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         date = self.request.query_params.get("date")
         train_id_str = self.request.query_params.get("train")
-        print("date", date)
         queryset = self.queryset
 
         if date:

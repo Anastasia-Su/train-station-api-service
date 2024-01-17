@@ -1,7 +1,5 @@
 import tempfile
 import os
-import urllib
-from django.test import override_settings
 
 from PIL import Image
 from django.contrib.auth import get_user_model
@@ -11,17 +9,12 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from station.models import (
-    Train,
-    TrainType,
-    Journey,
-    Route,
-    Station
-)
+from station.models import Train, TrainType, Journey, Route, Station
 from station.serializers import (
-    TrainSerializer,
     TrainListSerializer,
     TrainDetailSerializer,
+    JourneySerializer,
+    JourneyListSerializer,
 )
 
 TRAIN_URL = reverse("station:train-list")
@@ -30,13 +23,14 @@ JOURNEY_URL = reverse("station:journey-list")
 
 def payload(key=None, value=None):
     pld = {
-            "name": "Sample train",
-            "cargo_num": 5,
-            "places_in_cargo": 100,
-        }
+        "name": "Sample train",
+        "cargo_num": 5,
+        "places_in_cargo": 100,
+    }
     if key and value:
         pld[key] = value
     return pld
+
 
 def sample_train(**params):
     defaults = {
@@ -49,28 +43,16 @@ def sample_train(**params):
     return Train.objects.create(**defaults)
 
 
-def sample_journey(**params):
-    train = sample_train()
-    station1 = Station.objects.create(
-        name="ST1",
-        latitude=1.1,
-        longitude=6.8
-    )
-    station2 = Station.objects.create(
-        name="ST2",
-        latitude=9.1,
-        longitude=56.8
-    )
-    route = Route.objects.create(
-        source=station1,
-        destination=station2
-    )
+def sample_journey(i, **params):
+    station1 = Station.objects.create(name=f"ST{i}", latitude=1.1, longitude=6.8)
+    station2 = Station.objects.create(name=f"ST{i + 1}", latitude=9.1, longitude=56.8)
+    route = Route.objects.create(source=station1, destination=station2)
 
     defaults = {
         "departure_time": "2024-01-11 14:00:00",
         "arrival_time": "2024-01-12 06:00:00",
-        "train": train,
-        "route": route
+        "train": sample_train(),
+        "route": route,
     }
     defaults.update(params)
 
@@ -110,35 +92,56 @@ class AuthenticatedTrainApiTests(TestCase):
 
         res = self.client.get(TRAIN_URL)
 
-        trains = Train.objects.order_by("id")
+        trains = Train.objects.all()
         serializer = TrainListSerializer(trains, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
-    #
-    # def test_filter_trains_by_type(self):
-    #     type1 = TrainType.objects.create(name="type1")
-    #     type2 = TrainType.objects.create(name="type2")
-    #     another_type = TrainType.objects.create(name="another")
-    #
-    #     train1 = sample_train(train_type=type1)
-    #     train2 = sample_train(train_type=type2)
-    #     train3 = sample_train(train_type=another_type)
-    #
-    #     res = self.client.get(
-    #         TRAIN_URL, {"train_type__name__icontains": "type"}
-    #     )
-    #
-    #     serializer1 = TrainListSerializer(train1)
-    #     serializer2 = TrainListSerializer(train2)
-    #     serializer3 = TrainListSerializer(train3)
-    #
-    #     # print("Expected data:", [serializer1.data, serializer2.data])
-    #     # print("Actual data:", res.data)
-    #
-    #     self.assertIn(serializer1.data, res.data)
-    #     self.assertIn(serializer2.data, res.data)
-    #     self.assertNotIn(serializer3.data, res.data)
+
+    def test_filter_trains_by_type(self):
+        type1 = TrainType.objects.create(name="type1")
+        type2 = TrainType.objects.create(name="type2")
+        another_type = TrainType.objects.create(name="another")
+
+        train1 = sample_train(train_type=type1)
+        train2 = sample_train(train_type=type2)
+        train3 = sample_train(train_type=another_type)
+
+        res = self.client.get(TRAIN_URL, {"type": "type"})
+
+        serializer1 = TrainListSerializer(train1)
+        serializer2 = TrainListSerializer(train2)
+        serializer3 = TrainListSerializer(train3)
+
+        self.assertIn(serializer1.data, res.data)
+        self.assertIn(serializer2.data, res.data)
+        self.assertNotIn(serializer3.data, res.data)
+
+    def test_filter_journeys_by_date(self):
+        journey1 = sample_journey(1, departure_time="2024-01-11")
+        journey2 = sample_journey(3, departure_time="2023-12-12")
+
+        res = self.client.get(JOURNEY_URL, {"date": "2024-01-11"})
+
+        serializer1 = JourneyListSerializer(journey1)
+        serializer2 = JourneyListSerializer(journey2)
+
+        for item in res.data:
+            self.assertIn(serializer1.data["departure_time"], item["departure_time"])
+            self.assertNotIn(serializer2.data["departure_time"], item["departure_time"])
+
+    def test_filter_journeys_by_train_id(self):
+        journey1 = sample_journey(1)
+        journey2 = sample_journey(3)
+
+        res = self.client.get(JOURNEY_URL, {"train": 1})
+
+        serializer1 = JourneySerializer(journey1)
+        serializer2 = JourneySerializer(journey2)
+
+        for item in res.data:
+            self.assertEqual(serializer1.data["train"], item["id"])
+            self.assertNotEqual(serializer2.data["train"], item["id"])
 
     def test_retrieve_train_detail(self):
         train = sample_train()
@@ -156,7 +159,7 @@ class AuthenticatedTrainApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
 
-class AdminMovieApiTests(TestCase):
+class AdminTrainApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
@@ -170,15 +173,15 @@ class AdminMovieApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         train = Train.objects.get(id=res.data["id"])
-        for key in payload_var.keys():
+        for key in payload_var:
             self.assertEqual(payload_var[key], getattr(train, key))
 
-    def test_create_movie_with_type(self):
+    def test_create_train_with_type(self):
         ttype = TrainType.objects.create(name="Type1")
         payload_var = payload("train_type", ttype.pk)
 
         res = self.client.post(TRAIN_URL, payload_var)
-        print("Response data:", res.data)
+
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
         train_type = Train.objects.get(id=res.data["id"]).train_type
@@ -193,7 +196,7 @@ class TrainImageUploadTests(TestCase):
         )
         self.client.force_authenticate(self.user)
         self.train = sample_train()
-        self.journey = sample_journey(train=self.train)
+        self.journey = sample_journey(1, train=self.train)
 
     def tearDown(self):
         self.train.image.delete()
@@ -262,7 +265,7 @@ class TrainImageUploadTests(TestCase):
 
         self.assertIn("image", res.data[0].keys())
 
-    def test_image_url_is_shown_on_train_session_detail(self):
+    def test_image_url_is_shown_on_train_detail(self):
         url = image_upload_url(self.train.id)
         with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
             img = Image.new("RGB", (10, 10))
