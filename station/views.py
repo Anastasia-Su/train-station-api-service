@@ -48,7 +48,7 @@ class StationViewSet(viewsets.ModelViewSet):
 
 
 class RouteViewSet(viewsets.ModelViewSet):
-    queryset = Route.objects.all().select_related("source", "destination")
+    queryset = Route.objects.select_related("source", "destination")
     serializer_class = RouteSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
@@ -69,7 +69,7 @@ class TrainTypeViewSet(viewsets.ModelViewSet):
 
 
 class TrainViewSet(viewsets.ModelViewSet):
-    queryset = Train.objects.all().select_related("train_type")
+    queryset = Train.objects.select_related("train_type")
     serializer_class = TrainSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
