@@ -1,13 +1,11 @@
 import os
 import uuid
 from geopy.distance import geodesic
-from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
-from django.contrib.auth import get_user_model
 
 
 class Station(models.Model):
@@ -45,6 +43,12 @@ class Route(models.Model):
     def get_route_display(self):
         return f"From {self.source.name} to {self.destination.name}"
 
+    def __str__(self):
+        return f"{self.source.name} - {self.destination.name}"
+
+    class Meta:
+        unique_together = ("destination", "source")
+
 
 class TrainType(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -61,7 +65,7 @@ def train_image_file_path(instance, filename):
 
 
 class Train(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     cargo_num = models.IntegerField()
     places_in_cargo = models.IntegerField()
     train_type = models.ForeignKey(
@@ -106,14 +110,6 @@ class Journey(models.Model):
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
     crew = models.ManyToManyField(Crew, blank=True)
-
-    @property
-    def format_departure_time(self):
-        return self.departure_time.strftime("%Y-%m-%d %H:%M")
-
-    @property
-    def format_arrival_time(self):
-        return self.arrival_time.strftime("%Y-%m-%d %H:%M")
 
     def __str__(self):
         return f"{self.train.name} ({self.departure_time})"

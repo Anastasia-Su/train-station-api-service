@@ -13,7 +13,6 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
-import dj_database_url
 
 
 load_dotenv()
@@ -41,7 +40,6 @@ INTERNAL_IPS = [
     "172.17.0.1",
 ]
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -52,7 +50,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "rest_framework.authtoken",
     "drf_spectacular",
     "debug_toolbar",
     "django_extensions",
@@ -95,12 +92,6 @@ WSGI_APPLICATION = "train_station_api_service.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -110,16 +101,6 @@ DATABASES = {
         "PASSWORD": os.environ["POSTGRES_PASSWORD"]
     }
 }
-
-# For Elephant
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         },
-#     }
-#
-# db_from_env = dj_database_url.config(conn_max_age=600)
-# DATABASES["default"].update(db_from_env)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -161,8 +142,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "static/"
-
-# MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = "/vol/web/media"
 
@@ -172,6 +151,7 @@ MEDIA_ROOT = "/vol/web/media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
+    "DEFAULT_CACHE_RESPONSE_TIMEOUT": 0,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
@@ -201,5 +181,3 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
 }
-
-os.environ["PYTHONIOENCODING"] = "windows-1251"

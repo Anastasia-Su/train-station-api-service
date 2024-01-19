@@ -5,7 +5,6 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR app/
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
-RUN pip install --no-cache-dir psycopg2-binary
 RUN apt-get update && apt-get install -y ca-certificates
 
 COPY . .

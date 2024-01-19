@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
+
 from .models import (
     Train,
     TrainType,
@@ -136,8 +137,11 @@ class CrewViewSet(viewsets.ModelViewSet):
 
 class JourneyViewSet(viewsets.ModelViewSet):
     queryset = (
-        Journey.objects.select_related(
-            "route__source", "route__destination", "train"
+        Journey.objects
+        .select_related(
+            "route__source",
+            "route__destination",
+            "train",
         )
         .prefetch_related("crew")
         .annotate(
@@ -149,6 +153,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
         )
     )
     serializer_class = JourneySerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -162,7 +167,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         date = self.request.query_params.get("date")
         train_id_str = self.request.query_params.get("train")
-        queryset = self.queryset
+        queryset = self.queryset.all()
 
         if date:
             date = datetime.strptime(date, "%Y-%m-%d").date()

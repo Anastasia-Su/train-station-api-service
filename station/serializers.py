@@ -117,12 +117,8 @@ class CrewListSerializer(serializers.ModelSerializer):
 
 
 class JourneySerializer(serializers.ModelSerializer):
-    departure_time = serializers.CharField(
-        source="format_departure_time", read_only=True
-    )
-    arrival_time = serializers.CharField(
-        source="format_arrival_time", read_only=True
-    )
+    departure_time = serializers.DateTimeField(format="%Y-%m-%d %H:%M")
+    arrival_time = serializers.DateTimeField(format="%Y-%m-%d %H:%M")
 
     class Meta:
         model = Journey
@@ -144,10 +140,9 @@ class JourneyListSerializer(JourneySerializer):
         source="train.image", read_only=True
     )
     route = serializers.CharField(
-        source="route.get_route_display", read_only=True
+        source="route.get_route_display"
     )
     tickets_available = serializers.IntegerField(read_only=True)
-    departure_time = serializers.CharField()
 
     class Meta:
         model = Journey
