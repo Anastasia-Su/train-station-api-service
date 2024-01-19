@@ -32,9 +32,9 @@ def payload(key=None, value=None):
     return pld
 
 
-def sample_train(**params):
+def sample_train(i, **params):
     defaults = {
-        "name": "Sample train",
+        "name": f"Sample train{i}",
         "cargo_num": 5,
         "places_in_cargo": 100,
     }
@@ -51,7 +51,7 @@ def sample_journey(i, **params):
     defaults = {
         "departure_time": "2024-01-11 14:00:00",
         "arrival_time": "2024-01-12 06:00:00",
-        "train": sample_train(),
+        "train": sample_train(i),
         "route": route,
     }
     defaults.update(params)
@@ -87,8 +87,8 @@ class AuthenticatedTrainApiTests(TestCase):
         self.client.force_authenticate(self.user)
 
     def test_list_trains(self):
-        sample_train()
-        sample_train()
+        sample_train(1)
+        sample_train(2)
 
         res = self.client.get(TRAIN_URL)
 
@@ -103,9 +103,9 @@ class AuthenticatedTrainApiTests(TestCase):
         type2 = TrainType.objects.create(name="type2")
         another_type = TrainType.objects.create(name="another")
 
-        train1 = sample_train(train_type=type1)
-        train2 = sample_train(train_type=type2)
-        train3 = sample_train(train_type=another_type)
+        train1 = sample_train(3, train_type=type1)
+        train2 = sample_train(4, train_type=type2)
+        train3 = sample_train(5, train_type=another_type)
 
         res = self.client.get(TRAIN_URL, {"type": "type"})
 
@@ -118,8 +118,8 @@ class AuthenticatedTrainApiTests(TestCase):
         self.assertNotIn(serializer3.data, res.data)
 
     def test_filter_journeys_by_date(self):
-        journey1 = sample_journey(1, departure_time="2024-01-11")
-        journey2 = sample_journey(3, departure_time="2023-12-12")
+        journey1 = sample_journey(1, departure_time="2024-01-11", train=sample_train(6))
+        journey2 = sample_journey(3, departure_time="2023-12-12", train=sample_train(7))
 
         res = self.client.get(JOURNEY_URL, {"date": "2024-01-11"})
 
@@ -131,8 +131,8 @@ class AuthenticatedTrainApiTests(TestCase):
             self.assertNotIn(serializer2.data["departure_time"], item["departure_time"])
 
     def test_filter_journeys_by_train_id(self):
-        journey1 = sample_journey(1)
-        journey2 = sample_journey(3)
+        journey1 = sample_journey(1, train=sample_train(8))
+        journey2 = sample_journey(3, train=sample_train(9))
 
         res = self.client.get(JOURNEY_URL, {"train": 1})
 
@@ -144,7 +144,7 @@ class AuthenticatedTrainApiTests(TestCase):
             self.assertNotEqual(serializer2.data["train"], item["id"])
 
     def test_retrieve_train_detail(self):
-        train = sample_train()
+        train = sample_train(10)
 
         url = detail_url(train.id)
         res = self.client.get(url)
@@ -187,91 +187,91 @@ class AdminTrainApiTests(TestCase):
         train_type = Train.objects.get(id=res.data["id"]).train_type
         self.assertEqual(ttype, train_type)
 
-#
-# class TrainImageUploadTests(TestCase):
-#     def setUp(self):
-#         self.client = APIClient()
-#         self.user = get_user_model().objects.create_superuser(
-#             "admin@myproject.com", "password", is_staff=True
-#         )
-#         self.client.force_authenticate(self.user)
-#         self.train = sample_train()
-#         self.journey = sample_journey(1, train=self.train)
-#
-#     def tearDown(self):
-#         self.train.image.delete()
-#
-#     def test_upload_image_to_train(self):
-#         """Test uploading an image to train"""
-#         url = image_upload_url(self.train.id)
-#         with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
-#             img = Image.new("RGB", (10, 10))
-#             img.save(ntf, format="JPEG")
-#             ntf.seek(0)
-#             res = self.client.post(url, {"image": ntf}, format="multipart")
-#         self.train.refresh_from_db()
-#
-#         self.assertEqual(res.status_code, status.HTTP_200_OK)
-#         self.assertIn("image", res.data)
-#         self.assertTrue(os.path.exists(self.train.image.path))
-#
-#     def test_upload_image_bad_request(self):
-#         """Test uploading an invalid image"""
-#         url = image_upload_url(self.train.id)
-#         res = self.client.post(url, {"image": "not image"}, format="multipart")
-#
-#         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-#
-#     def test_post_image_to_train_list_should_not_work(self):
-#         url = TRAIN_URL
-#         with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
-#             img = Image.new("RGB", (10, 10))
-#             img.save(ntf, format="JPEG")
-#             ntf.seek(0)
-#             res = self.client.post(
-#                 url,
-#                 {
-#                     "name": "Sample train with img",
-#                     "cargo_num": 5,
-#                     "places_in_cargo": 100,
-#                     "image": ntf,
-#                 },
-#                 format="multipart",
-#             )
-#
-#         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-#         train = Train.objects.get(name="Sample train with img")
-#         self.assertFalse(train.image)
-#
-#     def test_image_url_is_shown_on_train_detail(self):
-#         url = image_upload_url(self.train.id)
-#         with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
-#             img = Image.new("RGB", (10, 10))
-#             img.save(ntf, format="JPEG")
-#             ntf.seek(0)
-#             self.client.post(url, {"image": ntf}, format="multipart")
-#         res = self.client.get(detail_url(self.train.id))
-#
-#         self.assertIn("image", res.data)
-#
-#     def test_image_url_is_shown_on_train_list(self):
-#         url = image_upload_url(self.train.id)
-#         with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
-#             img = Image.new("RGB", (10, 10))
-#             img.save(ntf, format="JPEG")
-#             ntf.seek(0)
-#             self.client.post(url, {"image": ntf}, format="multipart")
-#         res = self.client.get(TRAIN_URL)
-#
-#         self.assertIn("image", res.data[0].keys())
-#
-#     def test_image_url_is_shown_on_train_detail(self):
-#         url = image_upload_url(self.train.id)
-#         with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
-#             img = Image.new("RGB", (10, 10))
-#             img.save(ntf, format="JPEG")
-#             ntf.seek(0)
-#             self.client.post(url, {"image": ntf}, format="multipart")
-#         res = self.client.get(JOURNEY_URL)
-#
-#         self.assertIn("train_image", res.data[0].keys())
+
+class TrainImageUploadTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_superuser(
+            "admin@myproject.com", "password", is_staff=True
+        )
+        self.client.force_authenticate(self.user)
+        self.train = sample_train(12)
+        self.journey = sample_journey(1, train=self.train)
+
+    def tearDown(self):
+        self.train.image.delete()
+
+    def test_upload_image_to_train(self):
+        """Test uploading an image to train"""
+        url = image_upload_url(self.train.id)
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
+            img = Image.new("RGB", (10, 10))
+            img.save(ntf, format="JPEG")
+            ntf.seek(0)
+            res = self.client.post(url, {"image": ntf}, format="multipart")
+        self.train.refresh_from_db()
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("image", res.data)
+        self.assertTrue(os.path.exists(self.train.image.path))
+
+    def test_upload_image_bad_request(self):
+        """Test uploading an invalid image"""
+        url = image_upload_url(self.train.id)
+        res = self.client.post(url, {"image": "not image"}, format="multipart")
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_image_to_train_list_should_not_work(self):
+        url = TRAIN_URL
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
+            img = Image.new("RGB", (10, 10))
+            img.save(ntf, format="JPEG")
+            ntf.seek(0)
+            res = self.client.post(
+                url,
+                {
+                    "name": "Sample train with img",
+                    "cargo_num": 5,
+                    "places_in_cargo": 100,
+                    "image": ntf,
+                },
+                format="multipart",
+            )
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        train = Train.objects.get(name="Sample train with img")
+        self.assertFalse(train.image)
+
+    def test_image_url_is_shown_on_train_detail(self):
+        url = image_upload_url(self.train.id)
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
+            img = Image.new("RGB", (10, 10))
+            img.save(ntf, format="JPEG")
+            ntf.seek(0)
+            self.client.post(url, {"image": ntf}, format="multipart")
+        res = self.client.get(detail_url(self.train.id))
+
+        self.assertIn("image", res.data)
+
+    def test_image_url_is_shown_on_train_list(self):
+        url = image_upload_url(self.train.id)
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
+            img = Image.new("RGB", (10, 10))
+            img.save(ntf, format="JPEG")
+            ntf.seek(0)
+            self.client.post(url, {"image": ntf}, format="multipart")
+        res = self.client.get(TRAIN_URL)
+
+        self.assertIn("image", res.data[0].keys())
+
+    def test_image_url_is_shown_on_train_detail(self):
+        url = image_upload_url(self.train.id)
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
+            img = Image.new("RGB", (10, 10))
+            img.save(ntf, format="JPEG")
+            ntf.seek(0)
+            self.client.post(url, {"image": ntf}, format="multipart")
+        res = self.client.get(JOURNEY_URL)
+
+        self.assertIn("train_image", res.data[0].keys())
