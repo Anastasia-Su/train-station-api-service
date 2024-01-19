@@ -86,7 +86,7 @@ class TrainViewSet(viewsets.ModelViewSet):
         return TrainSerializer
 
     def get_queryset(self):
-        """Retrieve the movies with filters"""
+        """Retrieve the trains with filters"""
         train_type = self.request.query_params.get("type")
         queryset = self.queryset
 
